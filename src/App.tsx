@@ -13,6 +13,11 @@ import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate } from
 import OAuthHandler from './OAuthHandler';
 import { Language, translations } from './types/language';
 
+const getRedirectUri = () => {
+  const currentUrl = window.location.origin;  // http://localhost:5173 또는 https://yourmbti.vercel.app
+  return `${currentUrl}/oauth`;
+};
+
 async function refreshAccessToken(refreshToken: string) {
   try {
     const response = await fetch('https://kauth.kakao.com/oauth/token', {
@@ -100,6 +105,7 @@ function AppContent() {
     try {
         if (window.Kakao?.Auth) {
             window.Kakao.Auth.login({
+                redirectUri: getRedirectUri(),  // 동적으로 리다이렉트 URI 설정
                 scope: 'friends',
                 success: (authObj) => {
                     try {
@@ -259,7 +265,7 @@ function AppContent() {
           await refreshAccessToken(refreshToken);
         } else {
           console.error('No refresh token available. Please log in again.');
-          alert('로그인��� 필요합니다. 다시 로그인 해주세요.');
+          alert('로그인이 필요합니다. 다시 로그인 해주세요.');
         }
       } else {
         console.log('Access token is valid.');
