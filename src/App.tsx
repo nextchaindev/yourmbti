@@ -12,10 +12,11 @@ import { Brain } from 'lucide-react';
 import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import OAuthHandler from './OAuthHandler';
 import { Language, translations } from './types/language';
+import { createOrUpdateUser, saveTestResult, getTestResultsForUser, getUserData } from './lib/userService';
+import { supabase, signInWithKakao } from './lib/supabase';
 
 const getRedirectUri = () => {
-  const currentUrl = window.location.origin;  // http://localhost:5173 또는 https://yourmbti.vercel.app
-  return `${currentUrl}/oauth`;
+  return `${import.meta.env.VITE_APP_URL}/oauth`;
 };
 
 async function refreshAccessToken(refreshToken: string) {
@@ -56,13 +57,14 @@ function AppContent() {
   const location = useLocation();
   const navigate = useNavigate();
   const [language, setLanguage] = useState<Language>('ko');
+  const [testResults, setTestResults] = useState<any[]>([]);
+  const [session, setSession] = useState(null);
 
   useEffect(() => {
     // Initialize Kakao SDK
     if (window.Kakao && !window.Kakao.isInitialized()) {
       try {
-        //window.Kakao.init('f6b0fbb146c2235c751ab8415b2d1a28');  //a1ad1e811e4007cfe79c5ef89582eb0d
-        window.Kakao.init('a1ad1e811e4007cfe79c5ef89582eb0d');  //테스트
+        window.Kakao.init(import.meta.env.VITE_KAKAO_APP_KEY);
         console.log('Kakao SDK initialized');
       } catch (error) {
         console.error('Failed to initialize Kakao SDK:', error);
@@ -133,9 +135,28 @@ function AppContent() {
 
     window.Kakao.API.request({
         url: '/v2/user/me',
-        success: (res) => {
-            console.log('User info:', res);
+        success: async (res) => {
+            console.log('Kakao user info received:', res);
             setUser(res);
+            try {
+                if (res) {
+                    console.log('Attempting to save user to Supabase...');
+                    await createOrUpdateUser(res);
+                    console.log('User saved to Supabase successfully');
+                    
+                    // 사용자 데이터 가져오기
+                    const userData = await getUserData(res.id);
+                    console.log('Retrieved user data from Supabase:', userData);
+                    
+                    // 받은 평가 결과 설정
+                    if (userData?.received_results) {
+                        setTestResults(userData.received_results);
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to save/fetch user data:', error);
+            }
+            
             localStorage.setItem('kakaoUser', JSON.stringify(res));
         },
         fail: (error) => {
@@ -145,33 +166,36 @@ function AppContent() {
     });
   };
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (isLoggingIn) return;
     setIsLoggingIn(true);
 
-    if (!window.Kakao?.Auth) {
-        setIsLoggingIn(false);
-        alert('Kakao SDK가 초기화되지 않았습니다.');
-        return;
-    }
-
-    window.Kakao.Auth.login({
-        scope: 'profile_nickname,profile_image,friends',  // 필요한 권한들을 정확한 이름으로 지정
-        success: (authObj) => {
-            try {
-                window.Kakao.Auth.setAccessToken(authObj.access_token);
-                fetchUserInfo();
-            } catch (error) {
-                console.error('Error in login process:', error);
-                setIsLoggingIn(false);
-            }
+    try {
+      // 카카오 로그인
+      await window.Kakao.Auth.login({
+        scope: 'profile_nickname,profile_image',
+        success: async (authObj) => {
+          const kakaoUserInfo = await window.Kakao.API.request({
+            url: '/v2/user/me'
+          });
+          
+          // Supabase 인증
+          const { user, error } = await signInWithKakao(kakaoUserInfo);
+          if (error) throw error;
+          
+          setUser(user);
+          fetchUserTestResults(user.id);
         },
         fail: (err) => {
-            console.error('Login failed:', err);
-            alert('로그인에 실패했습니다. 권한을 확인해주세요.');
-            setIsLoggingIn(false);
+          throw err;
         }
-    });
+      });
+    } catch (error) {
+      console.error('Login failed:', error);
+      alert('로그인에 실패했습니다.');
+    } finally {
+      setIsLoggingIn(false);
+    }
   };
 
   const handleAnswer = (answer: Answer) => {
@@ -190,7 +214,7 @@ function AppContent() {
       setCurrentQuestionIndex(prev => prev + 1);
     } else {
       const mbtiType = calculateMBTI(newAnswers, questions);
-      setResult(mbtiType);
+      handleTestComplete(mbtiType);
     }
   };
 
@@ -294,7 +318,7 @@ function AppContent() {
       setCurrentQuestionIndex(prev => prev + 1);
     } else {
       const mbtiType = calculateMBTI(newAnswers, questions);
-      setResult(mbtiType);
+      handleTestComplete(mbtiType);
     }
   };
 
@@ -344,9 +368,100 @@ function AppContent() {
     </button>
   );
 
-  const handleLoginSuccess = () => {
-    fetchUserInfo(); // 로그인 성공 시 사용자 정보 가져오기
+  const handleLoginSuccess = async () => {
+    if (!user) return;
+    
+    try {
+        console.log('Starting login process with user:', user);
+
+        // Supabase에 사용자 정보 저장/업데이트
+        const userData = await createOrUpdateUser(user);
+        console.log('User data saved/updated:', userData);
+
+        // 사용자의 전체 데이터 (테스트 결과 포함) 가져오기
+        const fullUserData = await getUserData(user.id);
+        console.log('Full user data:', fullUserData);
+
+        // 테스트 결과가 있다면 상태 업데이트
+        if (fullUserData.mbti_results) {
+            setTestResults(fullUserData.mbti_results);
+        }
+
+        // localStorage에 사용자 정보 저장
+        localStorage.setItem('kakaoUser', JSON.stringify(user));
+    } catch (error) {
+        console.error('Detailed error in login process:', error);
+        alert('로그인 처리 중 오류가 발생했습니다.');
+    }
   };
+
+  // 사용자에 대한 테스트 결과 가져오기
+  const fetchUserTestResults = async () => {
+    if (!user) return;
+    try {
+      const results = await getTestResultsForUser(user.id);
+      setTestResults(results);
+    } catch (error) {
+      console.error('Error fetching test results:', error);
+    }
+  };
+
+  // MBTI 결과 저장
+  const handleTestComplete = async (mbtiType: string) => {
+    if (!user) {
+      console.error('No authenticated user found');
+      return;
+    }
+    
+    try {
+      const targetId = selectedFriend ? selectedFriend.id : user.id;
+      
+      console.log('Saving test result:', {
+        testerId: user.id,
+        targetId: targetId,
+        mbtiResult: mbtiType
+      });
+
+      const result = await saveTestResult(
+        user.id,
+        targetId,
+        mbtiType
+      );
+      
+      console.log('Test result saved:', result);
+      setResult(mbtiType);
+      
+      // 결과 저장 후 테스트 결과 목록 새로고침
+      if (targetId === user.id) {
+        const userData = await getUserData(user.id);
+        if (userData?.received_results) {
+          setTestResults(userData.received_results);
+        }
+      }
+    } catch (error) {
+      console.error('Error saving test result:', error);
+      alert('테스트 결과 저장에 실패했습니다.');
+    }
+  };
+
+  useEffect(() => {
+    // 세션 상태 확인
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      if (session?.user) {
+        fetchUserTestResults(session.user.id);
+      }
+    });
+
+    // 세션 변경 감지
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   if (!user) {
     return (
