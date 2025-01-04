@@ -110,7 +110,7 @@ function AppContent() {
                 success: (authObj) => {
                     try {
                         window.Kakao.Auth.setAccessToken(authObj.access_token);
-                        fetchUserInfo();
+                        fetchUserInfo(); // 로그인 성공 시 사용자 정보 가져오기
                     } catch (error) {
                         console.error('Error in login process:', error);
                         setIsLoggingIn(false);
@@ -134,21 +134,13 @@ function AppContent() {
     window.Kakao.API.request({
         url: '/v2/user/me',
         success: (res) => {
-            console.log('User info:', res); // 사용자 정보 구조 확인
-            try {
-                setUser(res);
-                localStorage.setItem('kakaoUser', JSON.stringify(res));
-                fetchFriends();
-                setIsLoggingIn(false);
-            } catch (error) {
-                console.error('Error storing user info:', error);
-                setIsLoggingIn(false);
-            }
+            console.log('User info:', res);
+            setUser(res);
+            localStorage.setItem('kakaoUser', JSON.stringify(res));
         },
         fail: (error) => {
             console.error('Failed to fetch user info:', error);
             alert('사용자 정보를 가져오는데 실패했습니다.');
-            setIsLoggingIn(false);
         }
     });
   };
@@ -353,8 +345,7 @@ function AppContent() {
   );
 
   const handleLoginSuccess = () => {
-    // Refresh user info or any other state you need to update
-    fetchUserInfo(); // Assuming this function fetches the user info
+    fetchUserInfo(); // 로그인 성공 시 사용자 정보 가져오기
   };
 
   if (!user) {

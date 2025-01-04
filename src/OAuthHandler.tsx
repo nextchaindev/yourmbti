@@ -15,7 +15,7 @@ function OAuthHandler({ onLoginSuccess }: OAuthHandlerProps) {
 
         if (code) {
             onLoginSuccess();
-            navigate(`/?code=${code}`, { replace: true });
+            navigate('/', { replace: true });
         } else {
             navigate('/');
         }
