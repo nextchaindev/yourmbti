@@ -40,6 +40,12 @@ This is a web application that allows users to take a personality test based on 
 - Log in using your KakaoTalk account.
 - Follow the prompts to take the MBTI personality test and evaluate your friends.
 
+## To-Do List
+### Features
+- [ ] Integrate with a backend database (e.g., Supabase) to save user test information.
+- [ ] Save friend evaluation information.
+- [ ] Create a personal page to display test results independently for each user.
+
 ## Contributing
 Contributions are welcome! Please open an issue or submit a pull request for any enhancements or bug fixes.
 
