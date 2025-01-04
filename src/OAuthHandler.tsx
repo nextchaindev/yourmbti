@@ -1,7 +1,11 @@
 import React, { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-function OAuthHandler() {
+interface OAuthHandlerProps {
+    onLoginSuccess: () => void;
+}
+
+function OAuthHandler({ onLoginSuccess }: OAuthHandlerProps) {
     const location = useLocation();
     const navigate = useNavigate();
 
@@ -10,12 +14,12 @@ function OAuthHandler() {
         const code = query.get('code');
 
         if (code) {
-            // 코드를 URL 파라미터로 전달
+            onLoginSuccess();
             navigate(`/?code=${code}`, { replace: true });
         } else {
             navigate('/');
         }
-    }, [location, navigate]);
+    }, [location, navigate, onLoginSuccess]);
 
     return <div>카카오톡 로그인 처리 중...</div>;
 }

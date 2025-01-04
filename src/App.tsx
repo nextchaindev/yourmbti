@@ -352,6 +352,11 @@ function AppContent() {
     </button>
   );
 
+  const handleLoginSuccess = () => {
+    // Refresh user info or any other state you need to update
+    fetchUserInfo(); // Assuming this function fetches the user info
+  };
+
   if (!user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 py-12 px-4">
@@ -373,7 +378,7 @@ function AppContent() {
 
   return (
     <Routes>
-      <Route path="/oauth" element={<OAuthHandler />} />
+      <Route path="/oauth" element={<OAuthHandler onLoginSuccess={handleLoginSuccess} />} />
       <Route path="/" element={
         <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 py-12 px-4">
           <div className="max-w-2xl mx-auto">
