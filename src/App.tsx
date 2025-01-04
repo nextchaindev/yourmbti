@@ -59,6 +59,8 @@ function AppContent() {
   const [language, setLanguage] = useState<Language>('ko');
   const [testResults, setTestResults] = useState<any[]>([]);
   const [session, setSession] = useState(null);
+  const [myMbtiResult, setMyMbtiResult] = useState<string | null>(null);
+  const [isTestMode, setIsTestMode] = useState(false);
 
   useEffect(() => {
     // Initialize Kakao SDK
@@ -199,6 +201,7 @@ function AppContent() {
   };
 
   const handleAnswer = (answer: Answer) => {
+    console.log('Handling answer:', answer);
     const newAnswers = [...answers];
     const existingIndex = newAnswers.findIndex(a => a.questionId === answer.questionId);
     
@@ -224,10 +227,11 @@ function AppContent() {
   };
 
   const restart = () => {
+    console.log('Starting new test...');
     setAnswers([]);
     setCurrentQuestionIndex(0);
     setResult(null);
-    setSelectedFriend(null);
+    setIsTestMode(true);  // 테스트 모드 활성화
   };
 
   const fetchFriends = async () => {
@@ -429,15 +433,37 @@ function AppContent() {
       );
       
       console.log('Test result saved:', result);
-      setResult(mbtiType);
       
-      // 결과 저장 후 테스트 결과 목록 새로고침
+      // 상태 업데이트 순서 변경
       if (targetId === user.id) {
+        setMyMbtiResult(mbtiType);  // 먼저 myMbtiResult 업데이트
+      }
+      setResult(mbtiType);
+      setIsTestMode(false);
+
+      // 전체 결과 새로고침
+      try {
         const userData = await getUserData(user.id);
+        console.log('Updated user data:', userData);
+        
         if (userData?.received_results) {
+          // 자신의 결과만 필터링
+          const selfResults = userData.received_results.filter(
+            (result: any) => result.tester_id === user.id && result.target_id === user.id
+          );
+          
+          if (selfResults.length > 0) {
+            const latestResult = selfResults[0];
+            setMyMbtiResult(latestResult.mbti_result);
+            console.log('Updated myMbtiResult:', latestResult.mbti_result);
+          }
+          
           setTestResults(userData.received_results);
         }
+      } catch (error) {
+        console.error('Error fetching updated results:', error);
       }
+
     } catch (error) {
       console.error('Error saving test result:', error);
       alert('테스트 결과 저장에 실패했습니다.');
@@ -462,6 +488,69 @@ function AppContent() {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // 사용자의 가장 최근 MBTI 결과를 가져오는 함수
+  const fetchMyLatestResult = async (userId: number) => {
+    try {
+      const userData = await getUserData(userId);
+      console.log('Fetched user data:', userData);
+      
+      if (userData?.received_results && userData.received_results.length > 0) {
+        // 자신이 자신을 평가한 결과만 필터링
+        const selfResults = userData.received_results.filter(
+          result => result.tester.id === userId
+        );
+        
+        if (selfResults.length > 0) {
+          // 가장 최근 결과 사용
+          const latestResult = selfResults[0];
+          console.log('Latest self MBTI result:', latestResult);
+          setMyMbtiResult(latestResult.mbti_result);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching my MBTI result:', error);
+    }
+  };
+
+  // 로그인 성공 시 자신의 MBTI 결과 가져오기
+  useEffect(() => {
+    if (user) {
+      fetchMyLatestResult(user.id);
+    }
+  }, [user]);
+
+  // 테스트 관련 공통 컴포넌트
+  const TestScreen = () => (
+    <div className="max-w-2xl mx-auto">
+      <ProgressBar
+        current={currentQuestionIndex + 1}
+        total={questions.length}
+      />
+      <QuestionCard
+        question={questions[currentQuestionIndex]}
+        onAnswer={handleAnswer}
+        currentAnswer={getCurrentAnswer(questions[currentQuestionIndex].id)}
+      />
+    </div>
+  );
+
+  // 결과 화면 공통 컴포넌트
+  const ResultScreen = ({ mbtiType, userName }: { mbtiType: string, userName: string }) => (
+    <div>
+      <TypeCard 
+        data={mbtiData[mbtiType]} 
+        userName={userName}
+        language={language}
+      />
+      <button
+        onClick={restart}
+        className="mt-6 w-full py-3 px-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+      >
+        {translations[language].retakeTest}
+      </button>
+    </div>
+  );
 
   if (!user) {
     return (
@@ -515,80 +604,37 @@ function AppContent() {
                 )}
               </div>
             </header>
-            <div className="text-center mb-10">
-              <div className="flex justify-center mb-4">
-                <Brain className="w-12 h-12 text-blue-600" />
-              </div>
-              <h1 className="text-4xl font-bold text-gray-800 mb-4">
-                {user.profile_nickname || user.properties?.nickname}{translations[language].testTitle}
-              </h1>
-              <p className="text-gray-600">
-                {translations[language].selectFriend}
-              </p>
-            </div>
 
-            {selectedFriend ? (
-              <div>
-                <h2 className="text-2xl font-bold text-gray-800 mb-4">
-                  {selectedFriend.profile_nickname || selectedFriend.properties?.nickname}{translations[language].evaluationOf}
-                </h2>
-                {!result ? (
-                  <>
-                    <ProgressBar
-                      current={currentQuestionIndex + 1}
-                      total={questions.length}
-                    />
-                    <QuestionCard
-                      question={questions[currentQuestionIndex]}
-                      onAnswer={handleFriendAnswer}
-                      currentAnswer={getCurrentAnswer(questions[currentQuestionIndex].id)}
-                    />
-                  </>
-                ) : (
-                  <div>
-                    <TypeCard 
-                      data={mbtiData[result]} 
-                      userName={selectedFriend.profile_nickname || selectedFriend.properties?.nickname} 
-                    />
-                    <button
-                      onClick={restart}
-                      className="mt-6 w-full py-3 px-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-                    >
-                      {translations[language].retakeTest}
-                    </button>
-                  </div>
-                )}
-              </div>
+            {isTestMode ? (
+              <TestScreen />
             ) : (
-              <div>
-                <div className="mb-8 p-6 bg-white rounded-lg shadow-sm">
-                  <div className="flex items-center mb-4">
-                    {(user.profile_thumbnail_image || user.properties?.thumbnail_image) && (
-                        <img 
-                            src={user.profile_thumbnail_image || user.properties?.thumbnail_image} 
-                            alt={user.profile_nickname || user.properties?.nickname} 
-                            className="w-12 h-12 rounded-full mr-4"
-                        />
-                    )}
+              <div className="space-y-8">
+                <div className="bg-white p-6 rounded-lg shadow-md">
+                  <h2 className="text-xl font-bold mb-4">
+                    {translations[language].myMbtiTitle}
+                  </h2>
+                  {myMbtiResult ? (
+                    <ResultScreen 
+                      mbtiType={myMbtiResult} 
+                      userName={user.profile_nickname || ''} 
+                    />
+                  ) : (
                     <div>
-                        <h2 className="text-2xl font-bold text-gray-800">
-                            {user.profile_nickname || user.properties?.nickname}{translations[language].myMbtiTitle}
-                        </h2>
-                        <p className="text-gray-600 mt-1">
-                            {translations[language].myMbtiDesc}
-                        </p>
+                      <p className="text-gray-600 mb-4">
+                        {translations[language].myMbtiDesc}
+                      </p>
+                      <button
+                        onClick={restart}
+                        className="w-full py-3 px-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                      >
+                        {translations[language].startTest}
+                      </button>
                     </div>
-                  </div>
-                  <button
-                    onClick={() => handleFriendSelect(user)}
-                    className="w-full bg-blue-500 text-white py-3 px-4 rounded-lg hover:bg-blue-600 transition-colors"
-                  >
-                    {translations[language].startTest}
-                  </button>
+                  )}
                 </div>
 
-                <div className="p-6 bg-white rounded-lg shadow-sm">
-                  <h2 className="text-2xl font-bold text-gray-800 mb-4">
+                <div className="bg-white p-6 rounded-lg shadow-md">
+                  <h2 className="text-xl font-bold mb-4">
                     {translations[language].friendMbtiTitle}
                   </h2>
                   {friends.length > 0 ? (
