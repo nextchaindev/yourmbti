@@ -1,5 +1,12 @@
+/**
+ * Language Type Definitions and Translations
+ * Contains type definitions and translations for multilingual support
+ */
+
+// Supported languages in the application
 export type Language = 'ko' | 'en';
 
+// Translation data for all supported languages
 export const translations = {
   ko: {
     title: 'MBTI 성격유형 테스트',

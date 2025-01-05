@@ -1,17 +1,27 @@
+/**
+ * KakaoLogin Component
+ * Handles the Kakao OAuth login process and displays the login button
+ * Uses the Kakao SDK to authenticate users and retrieve their information
+ */
+
 import React from 'react';
 import { MessageSquare } from 'lucide-react';
 
+// Props for the KakaoLogin component
 interface KakaoLoginProps {
   onLogin: () => void;
 }
 
+// Global type declaration for Kakao SDK
 declare global {
   interface Window {
     Kakao: any;
   }
 }
 
+// KakaoLogin component that displays a Kakao-styled login button
 export const KakaoLogin: React.FC<KakaoLoginProps> = ({ onLogin }) => {
+  // Handle Kakao login process
   const handleLogin = () => {
     if (!window.Kakao) {
       console.error('Kakao SDK not loaded');

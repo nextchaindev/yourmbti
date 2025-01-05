@@ -2,11 +2,19 @@ import React from 'react';
 import { MBTIType } from '../types/mbti';
 import { Brain, Briefcase, Check, X } from 'lucide-react';
 
+/**
+ * TypeCard Component
+ * Displays the MBTI test results in a visually appealing card format
+ * Shows personality type, description, strengths, weaknesses, and recommended careers
+ */
+
+// Props for the TypeCard component
 interface TypeCardProps {
-  data?: MBTIType;
-  userName?: string;
+  data?: MBTIType;     // MBTI type data to display
+  userName?: string;    // Optional username to personalize the result
 }
 
+// TypeCard component that renders a detailed MBTI result card
 export const TypeCard: React.FC<TypeCardProps> = ({ data, userName }) => {
   if (!data) {
     return (

@@ -13,6 +13,15 @@ import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate } from
 import OAuthHandler from './OAuthHandler';
 import { Language, translations } from './types/language';
 
+/**
+ * Main App Component
+ * Handles the core functionality of the MBTI test application including:
+ * - Kakao OAuth authentication and user management
+ * - MBTI test flow and result calculation
+ * - Friend list management and friend MBTI evaluation
+ * - Multilingual support (Korean/English)
+ */
+
 const getRedirectUri = () => {
   const currentUrl = window.location.origin;  // http://localhost:5173 또는 https://yourmbti.vercel.app
   return `${currentUrl}/oauth`;
@@ -57,6 +66,7 @@ function AppContent() {
   const navigate = useNavigate();
   const [language, setLanguage] = useState<Language>('ko');
 
+  // Initialize Kakao SDK and load user data on component mount
   useEffect(() => {
     // Initialize Kakao SDK
     if (window.Kakao && !window.Kakao.isInitialized()) {
@@ -89,6 +99,7 @@ function AppContent() {
     }
   }, []);
 
+  // Handle OAuth callback code from URL
   useEffect(() => {
     // URL에서 코드 파라미터 확인
     const urlParams = new URLSearchParams(window.location.search);
@@ -101,6 +112,7 @@ function AppContent() {
     }
   }, [location]);
 
+  // Process the OAuth authorization code after Kakao login redirect
   const handleAuthCode = async (code: string) => {
     try {
         if (window.Kakao?.Auth) {
@@ -128,6 +140,7 @@ function AppContent() {
     }
   };
 
+  // Fetch current user's information from Kakao API
   const fetchUserInfo = () => {
     if (!window.Kakao?.API) return;
 
@@ -145,6 +158,7 @@ function AppContent() {
     });
   };
 
+  // Initiate the Kakao login process with required permissions
   const handleLogin = () => {
     if (isLoggingIn) return;
     setIsLoggingIn(true);
@@ -174,6 +188,7 @@ function AppContent() {
     });
   };
 
+  // Record user's answer and update test progress
   const handleAnswer = (answer: Answer) => {
     const newAnswers = [...answers];
     const existingIndex = newAnswers.findIndex(a => a.questionId === answer.questionId);
@@ -194,11 +209,13 @@ function AppContent() {
     }
   };
 
+  // Get user's previous answer for a specific question
   const getCurrentAnswer = (questionId: number): 0 | 1 | undefined => {
     const answer = answers.find(a => a.questionId === questionId);
     return answer?.value;
   };
 
+  // Reset the test state to start over
   const restart = () => {
     setAnswers([]);
     setCurrentQuestionIndex(0);
@@ -206,6 +223,7 @@ function AppContent() {
     setSelectedFriend(null);
   };
 
+  // Fetch user's Kakao friends list
   const fetchFriends = async () => {
     if (window.Kakao && window.Kakao.Auth) {
       try {
@@ -233,6 +251,7 @@ function AppContent() {
     }
   };
 
+  // Check access token validity and refresh if needed
   const checkAndRefreshToken = async () => {
     const accessToken = localStorage.getItem('kakaoAccessToken');
     const refreshToken = localStorage.getItem('kakaoRefreshToken');
@@ -274,10 +293,12 @@ function AppContent() {
     }
   }, [user]);
 
+  // Handle friend selection for evaluation
   const handleFriendSelect = (friend: KakaoUser) => {
     setSelectedFriend(friend);
   };
 
+  // Process friend's MBTI test answers
   const handleFriendAnswer = (answer: Answer) => {
     const newAnswers = [...answers];
     const existingIndex = newAnswers.findIndex(a => a.questionId === answer.questionId);
@@ -298,6 +319,7 @@ function AppContent() {
     }
   };
 
+  // Handle user logout and clear stored data
   const handleLogout = () => {
     localStorage.removeItem('kakaoUser');
     localStorage.removeItem('kakaoAccessToken');
@@ -307,7 +329,7 @@ function AppContent() {
     setSelectedFriend(null);
   };
 
-  // 권한 요청 함수 추가
+  // Request additional permissions for friend list access
   const requestFriendPermission = () => {
     if (!window.Kakao?.Auth) {
         alert('Kakao SDK가 초기화되지 않았습니다.');
@@ -334,7 +356,7 @@ function AppContent() {
     });
   };
 
-  // 언어 전환 버튼 컴포넌트
+  // Language toggle component for switching between Korean and English
   const LanguageToggle = () => (
     <button
       onClick={() => setLanguage(prev => prev === 'ko' ? 'en' : 'ko')}
@@ -344,6 +366,7 @@ function AppContent() {
     </button>
   );
 
+  // Handle successful login callback
   const handleLoginSuccess = () => {
     fetchUserInfo(); // 로그인 성공 시 사용자 정보 가져오기
   };

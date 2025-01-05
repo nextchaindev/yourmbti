@@ -1,16 +1,28 @@
 # Features Documentation
 
+## Quick Navigation
+🔗 Core Features:
+- [Authentication](#1-authentication)
+- [MBTI Test](#2-mbti-test)
+- [Friend Evaluation](#3-friend-evaluation)
+- [Multi-language Support](#4-multi-language-support)
+- [User Interface](#5-user-interface)
+
+🔧 Support Systems:
+- [Error Handling](#error-handling)
+- [Performance Optimization](#performance-optimization)
+
 ## Feature Relationship Diagrams
 
 ### Core Feature Dependencies
 ```mermaid
 graph TD
-    Auth[Authentication]
-    FE[Friend Evaluation]
-    Test[MBTI Test]
-    MLS[Multi-language Support]
-    UI[User Interface]
-    PO[Performance Optimization]
+    Auth[1. Authentication]
+    FE[3. Friend Evaluation]
+    Test[2. MBTI Test]
+    MLS[4. Multi-language Support]
+    UI[5. User Interface]
+    PO[Performance]
     EH[Error Handling]
     
     Auth --> FE
@@ -26,14 +38,6 @@ graph TD
     EH --> Test
     EH --> FE
     
-    click Auth "#1-authentication" "Go to Authentication section"
-    click FE "#3-friend-evaluation" "Go to Friend Evaluation section"
-    click Test "#2-mbti-test" "Go to MBTI Test section"
-    click MLS "#4-multi-language-support" "Go to Multi-language Support section"
-    click UI "#5-user-interface" "Go to User Interface section"
-    click PO "#performance-optimization" "Go to Performance Optimization section"
-    click EH "#error-handling" "Go to Error Handling section"
-    
     classDef core fill:#e1f5fe,stroke:#01579b
     classDef support fill:#f3e5f5,stroke:#4a148c
     
@@ -44,15 +48,15 @@ graph TD
 ### Feature Impact Flow
 ```mermaid
 flowchart LR
-    subgraph Core Features
-        A[Authentication]
-        T[MBTI Test]
-        F[Friend Evaluation]
-        M[Multi-language]
-        U[UI/UX]
+    subgraph Core [Core Features]
+        A[1. Auth]
+        T[2. Test]
+        F[3. Friends]
+        M[4. Language]
+        U[5. UI/UX]
     end
     
-    subgraph Support Systems
+    subgraph Support [Support Systems]
         P[Performance]
         E[Error Handling]
     end
@@ -63,16 +67,8 @@ flowchart LR
     P -->|Optimization| M & U
     E -->|Error Management| A & T & F
     
-    click A "#1-authentication" "View Authentication details"
-    click T "#2-mbti-test" "View MBTI Test details"
-    click F "#3-friend-evaluation" "View Friend Evaluation details"
-    click M "#4-multi-language-support" "View Multi-language Support details"
-    click U "#5-user-interface" "View UI/UX details"
-    click P "#performance-optimization" "View Performance details"
-    click E "#error-handling" "View Error Handling details"
-    
-    style Core Features fill:#e1f5fe,stroke:#01579b
-    style Support Systems fill:#f3e5f5,stroke:#4a148c
+    style Core fill:#e1f5fe,stroke:#01579b
+    style Support fill:#f3e5f5,stroke:#4a148c
 ```
 
 ### State Management Flow

@@ -1,12 +1,19 @@
+/**
+ * MBTI Type Definitions and Data
+ * Contains type definitions and data for different MBTI personality types
+ */
+
+// Interface defining the structure of an MBTI type
 export type MBTIType = {
-  type: string;
-  title: string;
-  description: string;
-  strengths: string[];
-  weaknesses: string[];
-  careers: string[];
+  type: string;        // Four-letter MBTI code (e.g., 'INTJ')
+  title: string;       // Title of the personality type
+  description: string; // Brief description of the personality type
+  strengths: string[]; // Array of personality strengths
+  weaknesses: string[]; // Array of personality weaknesses
+  careers: string[];   // Array of recommended careers
 };
 
+// Database of MBTI types and their characteristics
 export const mbtiData: Record<string, MBTIType> = {
   'INTJ': {
     type: 'INTJ',

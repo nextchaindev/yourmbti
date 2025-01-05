@@ -1,8 +1,14 @@
 import React from 'react';
 
+/**
+ * ProgressBar Component
+ * Displays a visual progress indicator for the MBTI test
+ * Shows how many questions have been answered out of the total
+ */
+
 interface ProgressBarProps {
-  current: number;
-  total: number;
+  current: number;  // Current question number (1-based)
+  total: number;    // Total number of questions
 }
 
 export const ProgressBar: React.FC<ProgressBarProps> = ({ current, total }) => {

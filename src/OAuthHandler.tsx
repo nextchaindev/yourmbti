@@ -1,10 +1,18 @@
 import React, { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
+/**
+ * OAuthHandler Component
+ * Handles the OAuth callback from Kakao login
+ * Processes the authorization code and redirects back to the main app
+ */
+
+// Props for the OAuthHandler component
 interface OAuthHandlerProps {
-    onLoginSuccess: () => void;
+    onLoginSuccess: () => void;  // Callback function to execute after successful login
 }
 
+// OAuthHandler component that processes the OAuth callback
 function OAuthHandler({ onLoginSuccess }: OAuthHandlerProps) {
     const location = useLocation();
     const navigate = useNavigate();
