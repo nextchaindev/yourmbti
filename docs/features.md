@@ -1,5 +1,123 @@
 # Features Documentation
 
+## Feature Relationship Diagrams
+
+### Core Feature Dependencies
+```mermaid
+graph TD
+    Auth[Authentication]
+    FE[Friend Evaluation]
+    Test[MBTI Test]
+    MLS[Multi-language Support]
+    UI[User Interface]
+    PO[Performance Optimization]
+    EH[Error Handling]
+    
+    Auth --> FE
+    Auth --> Test
+    MLS --> UI
+    MLS --> Auth
+    MLS --> Test
+    MLS --> FE
+    Test --> FE
+    PO --> UI
+    PO --> MLS
+    EH --> Auth
+    EH --> Test
+    EH --> FE
+    
+    click Auth "#1-authentication" "Go to Authentication section"
+    click FE "#3-friend-evaluation" "Go to Friend Evaluation section"
+    click Test "#2-mbti-test" "Go to MBTI Test section"
+    click MLS "#4-multi-language-support" "Go to Multi-language Support section"
+    click UI "#5-user-interface" "Go to User Interface section"
+    click PO "#performance-optimization" "Go to Performance Optimization section"
+    click EH "#error-handling" "Go to Error Handling section"
+    
+    classDef core fill:#e1f5fe,stroke:#01579b
+    classDef support fill:#f3e5f5,stroke:#4a148c
+    
+    class Auth,Test,FE,MLS,UI core
+    class PO,EH support
+```
+
+### Feature Impact Flow
+```mermaid
+flowchart LR
+    subgraph Core Features
+        A[Authentication]
+        T[MBTI Test]
+        F[Friend Evaluation]
+        M[Multi-language]
+        U[UI/UX]
+    end
+    
+    subgraph Support Systems
+        P[Performance]
+        E[Error Handling]
+    end
+    
+    A -->|Auth State| T & F
+    T -->|Test Results| F
+    M -->|Localization| A & T & F & U
+    P -->|Optimization| M & U
+    E -->|Error Management| A & T & F
+    
+    click A "#1-authentication" "View Authentication details"
+    click T "#2-mbti-test" "View MBTI Test details"
+    click F "#3-friend-evaluation" "View Friend Evaluation details"
+    click M "#4-multi-language-support" "View Multi-language Support details"
+    click U "#5-user-interface" "View UI/UX details"
+    click P "#performance-optimization" "View Performance details"
+    click E "#error-handling" "View Error Handling details"
+    
+    style Core Features fill:#e1f5fe,stroke:#01579b
+    style Support Systems fill:#f3e5f5,stroke:#4a148c
+```
+
+### State Management Flow
+```mermaid
+stateDiagram-v2
+    [*] --> Login
+    Login --> AuthState
+    
+    state AuthState {
+        [*] --> Authenticated
+        Authenticated --> TestAccess: Start Test
+        Authenticated --> FriendAccess: View Friends
+        
+        state TestAccess {
+            [*] --> InProgress
+            InProgress --> Completed
+            InProgress --> Saved: Save Progress
+            Saved --> InProgress: Resume
+        }
+        
+        state FriendAccess {
+            [*] --> FriendList
+            FriendList --> Evaluation
+            Evaluation --> Results
+        }
+    }
+    
+    state "Error States" as ES {
+        NetworkError
+        AuthError
+        ValidationError
+    }
+    
+    state "Language Context" as LC {
+        Korean
+        English
+    }
+    
+    AuthState --> ES: Error Occurs
+    ES --> AuthState: Resolve Error
+    
+    LC --> AuthState: Update UI
+    AuthState --> LC: Change Language
+```
+
 ## Core Features
 
 ### 1. Authentication
