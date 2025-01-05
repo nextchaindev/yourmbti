@@ -16,6 +16,7 @@ interface TypeCardProps {
 
 // TypeCard component that renders a detailed MBTI result card
 export const TypeCard: React.FC<TypeCardProps> = ({ data, userName }) => {
+  // Show error state if no MBTI data is provided
   if (!data) {
     return (
       <div className="bg-white rounded-xl shadow-lg p-6 max-w-2xl mx-auto">
@@ -27,8 +28,10 @@ export const TypeCard: React.FC<TypeCardProps> = ({ data, userName }) => {
     );
   }
 
+  // Render the full MBTI result card with all sections
   return (
     <div className="bg-white rounded-xl shadow-lg p-6 max-w-2xl mx-auto">
+      {/* Header section with MBTI type and title */}
       <div className="text-center mb-6">
         <h1 className="text-3xl font-bold text-gray-800">
           {userName ? `${userName}님의 MBTI는` : ''} {data.type}
@@ -36,6 +39,7 @@ export const TypeCard: React.FC<TypeCardProps> = ({ data, userName }) => {
         <h2 className="text-xl text-gray-600 mt-2">{data.title}</h2>
       </div>
 
+      {/* Personality description section */}
       <div className="mb-6">
         <div className="flex items-center gap-2 mb-3">
           <Brain className="w-6 h-6 text-blue-500" />
@@ -44,7 +48,9 @@ export const TypeCard: React.FC<TypeCardProps> = ({ data, userName }) => {
         <p className="text-gray-700">{data.description}</p>
       </div>
 
+      {/* Strengths and weaknesses grid section */}
       <div className="grid md:grid-cols-2 gap-6">
+        {/* Strengths column */}
         <div>
           <div className="flex items-center gap-2 mb-3">
             <Check className="w-6 h-6 text-green-500" />
@@ -57,6 +63,7 @@ export const TypeCard: React.FC<TypeCardProps> = ({ data, userName }) => {
           </ul>
         </div>
 
+        {/* Weaknesses column */}
         <div>
           <div className="flex items-center gap-2 mb-3">
             <X className="w-6 h-6 text-red-500" />
@@ -70,6 +77,7 @@ export const TypeCard: React.FC<TypeCardProps> = ({ data, userName }) => {
         </div>
       </div>
 
+      {/* Recommended careers section */}
       <div className="mt-6">
         <div className="flex items-center gap-2 mb-3">
           <Briefcase className="w-6 h-6 text-purple-500" />

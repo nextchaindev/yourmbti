@@ -68,7 +68,7 @@ function AppContent() {
 
   // Initialize Kakao SDK and load user data on component mount
   useEffect(() => {
-    // Initialize Kakao SDK
+    // Check if Kakao SDK is not already initialized
     if (window.Kakao && !window.Kakao.isInitialized()) {
       try {
         //window.Kakao.init('f6b0fbb146c2235c751ab8415b2d1a28');  //a1ad1e811e4007cfe79c5ef89582eb0d
@@ -80,17 +80,17 @@ function AppContent() {
     }
 
     try {
-      // 사용자 정보 불러오기
+      // Load saved user data from localStorage if available
       const savedUser = localStorage.getItem('kakaoUser');
       if (savedUser) {
         setUser(JSON.parse(savedUser));
         
-        // 저장된 친구 목록이 있다면 불러오기
+        // Load friend list from localStorage or fetch new if not available
         const savedFriends = localStorage.getItem('kakaoFriends');
         if (savedFriends) {
           setFriends(JSON.parse(savedFriends));
         } else {
-          // 저장된 친구 목록이 없다면 새로 가져오기
+          // Fetch new friend list if not found in localStorage
           fetchFriends();
         }
       }
@@ -191,19 +191,24 @@ function AppContent() {
   // Record user's answer and update test progress
   const handleAnswer = (answer: Answer) => {
     const newAnswers = [...answers];
+    // Check if this question was already answered
     const existingIndex = newAnswers.findIndex(a => a.questionId === answer.questionId);
     
     if (existingIndex >= 0) {
+      // Update existing answer if found
       newAnswers[existingIndex] = answer;
     } else {
+      // Add new answer if not previously answered
       newAnswers.push(answer);
     }
     
     setAnswers(newAnswers);
 
+    // Move to next question or show result if test is complete
     if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex(prev => prev + 1);
     } else {
+      // Calculate and display MBTI result when all questions are answered
       const mbtiType = calculateMBTI(newAnswers, questions);
       setResult(mbtiType);
     }
@@ -225,17 +230,18 @@ function AppContent() {
 
   // Fetch user's Kakao friends list
   const fetchFriends = async () => {
+    // Verify Kakao SDK is initialized and authenticated
     if (window.Kakao && window.Kakao.Auth) {
       try {
         console.log('Fetching friends list...');
         const response = await window.Kakao.API.request({
           url: '/v1/api/talk/friends',
         });
-        console.log('Friends list response:', response);
+        // Check if friends data exists in response
         if (response.elements) {
           console.log('Friends list fetched:', response.elements);
           setFriends(response.elements);
-          // 친구 목록을 localStorage에 저장
+          // Cache friends list in localStorage for future use
           localStorage.setItem('kakaoFriends', JSON.stringify(response.elements));
         } else {
           console.error('No friends data found in response:', response);
@@ -256,6 +262,7 @@ function AppContent() {
     const accessToken = localStorage.getItem('kakaoAccessToken');
     const refreshToken = localStorage.getItem('kakaoRefreshToken');
 
+    // Verify access token exists
     if (!accessToken) {
       console.error('No access token found. Please log in again.');
       alert('로그인이 필요합니다. 다시 로그인 해주세요.');
@@ -270,9 +277,11 @@ function AppContent() {
         },
       });
 
+      // Handle expired or invalid token
       if (response.status === 401) {
         console.log('Access token expired or invalid. Refreshing token...');
         if (refreshToken) {
+          // Attempt to refresh token if refresh token exists
           await refreshAccessToken(refreshToken);
         } else {
           console.error('No refresh token available. Please log in again.');

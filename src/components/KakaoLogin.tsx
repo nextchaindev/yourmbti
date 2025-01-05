@@ -23,21 +23,27 @@ declare global {
 export const KakaoLogin: React.FC<KakaoLoginProps> = ({ onLogin }) => {
   // Handle Kakao login process
   const handleLogin = () => {
+    // Verify Kakao SDK is loaded before proceeding
     if (!window.Kakao) {
       console.error('Kakao SDK not loaded');
       return;
     }
 
+    // Initiate Kakao login flow
     window.Kakao.Auth.login({
       success: () => {
+        // After successful login, fetch user information
         window.Kakao.API.request({
           url: '/v2/user/me',
           success: (res: any) => {
+            // Create user object with necessary information
             const user = {
               id: res.id,
               properties: res.properties
             };
+            // Store user data in localStorage for persistence
             localStorage.setItem('kakaoUser', JSON.stringify(user));
+            // Notify parent component of successful login
             onLogin();
           },
           fail: (error: any) => {
@@ -51,6 +57,7 @@ export const KakaoLogin: React.FC<KakaoLoginProps> = ({ onLogin }) => {
     });
   };
 
+  // Render Kakao-styled login button
   return (
     <button
       onClick={handleLogin}
